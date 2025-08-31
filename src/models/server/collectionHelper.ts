@@ -1,21 +1,6 @@
-import { IndexType } from "node-appwrite";
 import { db } from "../name";
 import { databases } from "./config";
-
-export type Attribute = {
-    key: string;
-    type: "string" | "enum";   // supports string and enum
-    size?: number;             // for string attributes
-    required?: boolean;
-    array?: boolean;
-    enumValues?: string[];     // for enum attributes
-};
-
-export type Index = {
-    key: string;
-    type: IndexType;
-    attributes: string[];
-};
+import type { Attribute, Index } from "@/types";
 
 export async function createCollectionIfNotExists(
     collectionId: string,
