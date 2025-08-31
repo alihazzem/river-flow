@@ -1,14 +1,10 @@
 import { db } from "../name";
 import { databases } from "./config";
-import type { Attribute, Index } from "@/types";
+import type { CollectionOptions } from "@/types";
 
-export async function createCollectionIfNotExists(
-    collectionId: string,
-    name: string,
-    permissions: string[],
-    attributes: Attribute[],
-    indexes: Index[]
-) {
+export async function createCollectionIfNotExists(options: CollectionOptions) {
+    const { collectionId, name, permissions, attributes, indexes } = options;
+
     // Check if collection exists
     let collectionExists = true;
     try {

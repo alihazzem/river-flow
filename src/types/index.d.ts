@@ -14,3 +14,11 @@ export type Index = {
     type: IndexType;
     attributes: string[];
 };
+
+export type CollectionOptions = {
+    collectionId: string;
+    name: string;
+    permissions: string[];
+    attributes: Attribute[];
+    indexes: Index[];
+};
