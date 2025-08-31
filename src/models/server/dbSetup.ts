@@ -7,20 +7,20 @@ import createVoteCollection from "./vote.collection";
 
 export default async function getOrCreateDB() {
     try {
+        // Check if database exists
         await databases.get(db);
     } catch {
         try {
+            // Create database if not exists
             await databases.create(db, "Database");
 
-            // Creating collections
-            await Promise.all([
-                createAnswerCollection(),
-                createCommentCollection(),
-                createQuestionCollection(),
-                createVoteCollection(),
-            ])
+            // Create collections **sequentially**
+            await createAnswerCollection();
+            await createCommentCollection();
+            await createQuestionCollection();
+            await createVoteCollection();
         } catch (error) {
-            console.log("Error creating database: ", error);
+            console.error("Error creating database or collections:", error);
         }
     }
 

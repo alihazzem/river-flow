@@ -1,29 +1,28 @@
 import { IndexType, Permission } from "node-appwrite";
-import { db, questionCollection } from "../name";
-import { databases } from "./config";
+import { questionCollection } from "../name";
+import { createCollectionIfNotExists } from "./collectionHelper";
 
 export default async function createQuestionCollection() {
-    // Creating collection
-    await databases.createCollection(db, questionCollection, "Questions", [
-        Permission.read("any"),
-        Permission.read("users"),
-        Permission.create("users"),
-        Permission.update("users"),
-        Permission.delete("users"),
-    ]);
-
-    // Creating attributes
-    await Promise.all([
-        databases.createStringAttribute(db, questionCollection, "title", 100, true),
-        databases.createStringAttribute(db, questionCollection, "content", 10000, true),
-        databases.createStringAttribute(db, questionCollection, "authorId", 50, true),
-        databases.createStringAttribute(db, questionCollection, "tags", 50, true, undefined, true),
-        databases.createStringAttribute(db, questionCollection, "attachmentId", 50, false),
-    ]);
-
-    // Creating indexes
-    await Promise.all([
-        databases.createIndex(db, questionCollection, "title", IndexType.Fulltext, ["title"], ["asc"]),
-        databases.createIndex(db, questionCollection, "content", IndexType.Fulltext, ["title"], ["asc"]),
-    ]);
+    await createCollectionIfNotExists(
+        questionCollection,
+        "Questions",
+        [
+            Permission.read("any"),
+            Permission.read("users"),
+            Permission.create("users"),
+            Permission.update("users"),
+            Permission.delete("users"),
+        ],
+        [
+            { key: "title", type: "string", size: 100, required: true },
+            { key: "content", type: "string", size: 10000, required: true },
+            { key: "authorId", type: "string", size: 50, required: true },
+            { key: "tags", type: "string", size: 50, required: true, array: true },
+            { key: "attachmentId", type: "string", size: 50, required: false },
+        ],
+        [
+            { key: "title_index", type: IndexType.Fulltext, attributes: ["title"] },
+            { key: "content_index", type: IndexType.Fulltext, attributes: ["content"] },
+        ]
+    );
 }

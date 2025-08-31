@@ -1,22 +1,24 @@
 import { Permission } from "node-appwrite";
-import { db, commentCollection } from "../name";
-import { databases } from "./config";
+import { commentCollection } from "../name";
+import { createCollectionIfNotExists } from "./collectionHelper";
 
-export default async function createQuestionCollection() {
-    // Creating collection
-    await databases.createCollection(db, commentCollection, "Comments", [
-        Permission.read("any"),
-        Permission.read("users"),
-        Permission.create("users"),
-        Permission.update("users"),
-        Permission.delete("users"),
-    ]);
-
-    // Creating attributes
-    await Promise.all([
-        databases.createStringAttribute(db, commentCollection, "content", 10000, true),
-        databases.createStringAttribute(db, commentCollection, "authorId", 50, true),
-        databases.createEnumAttribute(db, commentCollection, "type", ["question", "answer"], true),
-        databases.createStringAttribute(db, commentCollection, "typeId", 50, true),
-    ]);
+export default async function createCommentCollection() {
+    await createCollectionIfNotExists(
+        commentCollection,
+        "Comments",
+        [
+            Permission.read("any"),
+            Permission.read("users"),
+            Permission.create("users"),
+            Permission.update("users"),
+            Permission.delete("users"),
+        ],
+        [
+            { key: "content", type: "string", size: 10000, required: true },
+            { key: "authorId", type: "string", size: 50, required: true },
+            { key: "typeId", type: "string", size: 50, required: true },
+            { key: "type", type: "enum", enumValues: ["question", "answer"], required: true },
+        ],
+        [] // No indexes for now
+    );
 }

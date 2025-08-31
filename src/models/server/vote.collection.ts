@@ -1,22 +1,24 @@
 import { Permission } from "node-appwrite";
-import { db, voteCollection } from "../name";
-import { databases } from "./config";
+import { voteCollection } from "../name";
+import { createCollectionIfNotExists } from "./collectionHelper";
 
-export default async function createQuestionCollection() {
-    // Creating collection
-    await databases.createCollection(db, voteCollection, "Votes", [
-        Permission.read("any"),
-        Permission.read("users"),
-        Permission.create("users"),
-        Permission.update("users"),
-        Permission.delete("users"),
-    ]);
-
-    // Creating attributes
-    await Promise.all([
-        databases.createEnumAttribute(db, voteCollection, "type", ["question", "answer"], true),
-        databases.createStringAttribute(db, voteCollection, "typeId", 50, true),
-        databases.createEnumAttribute(db, voteCollection, "voteStatus", ["upVoted", "downVoted"], true),
-        databases.createStringAttribute(db, voteCollection, "votedById", 50, true),
-    ]);
+export default async function createVoteCollection() {
+    await createCollectionIfNotExists(
+        voteCollection,
+        "Votes",
+        [
+            Permission.read("any"),
+            Permission.read("users"),
+            Permission.create("users"),
+            Permission.update("users"),
+            Permission.delete("users"),
+        ],
+        [
+            { key: "type", type: "enum", enumValues: ["question", "answer"], required: true },
+            { key: "typeId", type: "string", size: 50, required: true },
+            { key: "voteStatus", type: "enum", enumValues: ["upVoted", "downVoted"], required: true },
+            { key: "votedById", type: "string", size: 50, required: true },
+        ],
+        [] // No indexes for now
+    );
 }

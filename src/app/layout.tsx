@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { initServer } from "@/models/server/serverInit";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,11 +18,13 @@ export const metadata: Metadata = {
   description: "A question and answer platform",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  await initServer();
+
   return (
     <html lang="en">
       <body
