@@ -1,4 +1,5 @@
 import { IndexType } from "node-appwrite";
+import { AppwriteException, Models } from "appwrite";
 
 export type Attribute = {
     key: string;
@@ -22,3 +23,28 @@ export type CollectionOptions = {
     attributes: Attribute[];
     indexes: Index[];
 };
+
+export interface AuthResponse {
+    success: boolean;
+    error?: AppwriteException | null;
+}
+
+export interface UserPrefs extends Models.DefaultPreferences {
+    reputation: number;
+}
+
+export interface IAuthStore {
+    session: Models.Session | null;
+    jwt: string | null;
+    user: Models.User | null;
+    hydrated: boolean;
+
+    setHydrated(): void;
+    verifySession(): Promise<AuthResponse>;
+    login(email: string, password: string): Promise<{
+        success: boolean;
+        error?: AppwriteException | null;
+    }>;
+    register(email: string, password: string, name: string): Promise<AuthResponse>;
+    logout(): Promise<void>;
+}
