@@ -6,8 +6,15 @@ const client = new Client();
 client
     .setEndpoint(env.appwrite.endpoint)
     .setProject(env.appwrite.projectId)
-    .setKey(env.appwrite.apiKey);
-;
+    ;
+
+if (typeof window === "undefined") {
+    if (env.nodeEnv === "development" && env.appwrite.devKey) {
+        client.setKey(env.appwrite.devKey);
+    } else if (env.appwrite.apiKey) {
+        client.setKey(env.appwrite.apiKey); // production server-side key
+    }
+}
 
 const databases = new Databases(client);
 const avatars = new Avatars(client);
