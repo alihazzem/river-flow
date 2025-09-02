@@ -36,7 +36,7 @@ export interface UserPrefs extends Models.DefaultPreferences {
 export interface IAuthStore {
     session: Models.Session | null;
     jwt: string | null;
-    user: Models.User | null;
+    user: Models.User<UserPrefs> | null;
     hydrated: boolean;
 
     setHydrated(): void;
