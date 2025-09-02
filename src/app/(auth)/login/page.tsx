@@ -1,47 +1,49 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
-import Link from "next/link"
+import React, { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/Auth"
+import { useLoginFormStore } from "@/store/FormState"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { IconBrandGithub, IconBrandGoogle } from "@tabler/icons-react"
+import Link from "next/link"
+import { flattenValidationError } from "@/utils/form"
 
 function LoginPage() {
     const { login } = useAuthStore()
+    const { email, password, setField, reset } = useLoginFormStore()
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
     const [errors, setErrors] = useState<{ [key: string]: string }>({})
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-
-        const formData = new FormData(e.currentTarget)
-        const email = (formData.get("email") as string) || ""
-        const password = (formData.get("password") as string) || ""
-
-        const newErrors: { [key: string]: string } = {}
-        if (!email) newErrors.email = "Email is required"
-        if (!password) newErrors.password = "Password is required"
-
-        setErrors(newErrors)
-        if (Object.keys(newErrors).length > 0) return
-
-        setIsLoading(true)
         setErrors({})
 
-        const loginResponse = await login(email, password)
-        if (loginResponse.error) {
-            setErrors({ general: loginResponse.error.message })
-        } else {
-            router.push("/profile")
+        const formData = new FormData(e.currentTarget)
+        const emailInput = (formData.get("email") as string)?.trim() || ""
+        const passwordInput = (formData.get("password") as string)?.trim() || ""
+
+        setIsLoading(true)
+
+        const loginResponse = await login(emailInput, passwordInput)
+
+        if (!loginResponse.success) {
+            if ("validationError" in loginResponse && loginResponse.validationError) {
+                setErrors(flattenValidationError(loginResponse.validationError))
+            } else if (loginResponse.error) {
+                setErrors({ general: loginResponse.error.message })
+            }
+            setIsLoading(false)
+            return
         }
 
         setIsLoading(false)
+        reset() // clear persisted form state
+        router.push("/profile")
     }
 
     return (
@@ -86,8 +88,10 @@ function LoginPage() {
                             </Label>
                             <Input
                                 id="email"
-                                type="email"
+                                type="text"
                                 name="email"
+                                value={email}
+                                onChange={(e) => setField("email", e.target.value)}
                                 placeholder="you@example.com"
                                 className="bg-input border-input text-foreground placeholder-muted-foreground focus:ring-primary focus:border-primary"
                             />
@@ -103,6 +107,8 @@ function LoginPage() {
                                 id="password"
                                 type="password"
                                 name="password"
+                                value={password}
+                                onChange={(e) => setField("password", e.target.value)}
                                 placeholder="********"
                                 className="bg-input border-input text-foreground placeholder-muted-foreground focus:ring-primary focus:border-primary"
                             />

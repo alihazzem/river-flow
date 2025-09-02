@@ -3,52 +3,72 @@
 import type React from "react"
 import { useState } from "react"
 import { useAuthStore } from "@/store/Auth"
+import { useRegisterFormStore } from "@/store/FormState"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { IconLock, IconMail, IconUser, IconBrandGoogle, IconBrandGithub } from "@tabler/icons-react"
+import { flattenValidationError } from "@/utils/form"
 import Link from "next/link"
 
 function RegisterPage() {
     const { register, login } = useAuthStore()
+    const { firstname, lastname, email, password, setField, reset } = useRegisterFormStore()
     const [isLoading, setIsLoading] = useState(false)
     const [errors, setErrors] = useState<{ [key: string]: string }>({})
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
+    const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setErrors({});
 
-        const formData = new FormData(e.currentTarget)
-        const firstname = (formData.get("firstname") as string) || ""
-        const lastname = (formData.get("lastname") as string) || ""
-        const email = (formData.get("email") as string) || ""
-        const password = (formData.get("password") as string) || ""
+        const formData = new FormData(e.currentTarget);
+        const firstname = (formData.get("firstname") as string)?.trim() || "";
+        const lastname = (formData.get("lastname") as string)?.trim() || "";
+        const email = (formData.get("email") as string)?.trim() || "";
+        const password = (formData.get("password") as string)?.trim() || "";
 
-        const newErrors: { [key: string]: string } = {}
-        if (!firstname) newErrors.firstname = "First name is required"
-        if (!lastname) newErrors.lastname = "Last name is required"
-        if (!email) newErrors.email = "Email is required"
-        if (!password) newErrors.password = "Password is required"
+        // Frontend name validation
+        const nameErrors: { name?: string } = {};
+        if (!firstname || firstname.length < 3 || !lastname || lastname.length < 3) {
+            nameErrors.name = "First and last name must be at least 3 characters long";
+        }
 
-        setErrors(newErrors)
+        // Call register (which also runs Zod validation for email/password)
+        const registerResponse = await register(email, password, `${firstname} ${lastname}`);
 
-        if (Object.keys(newErrors).length > 0) return
+        const combinedErrors: { [key: string]: string } = { ...nameErrors };
 
-        setIsLoading(true)
-        setErrors({})
-
-        const registerResponse = await register(email, password, `${firstname} ${lastname}`)
-        if (registerResponse.error) {
-            setErrors({ general: registerResponse.error.message })
-        } else {
-            const loginResponse = await login(email, password)
-            if (loginResponse.error) {
-                setErrors({ general: loginResponse.error.message })
+        if (!registerResponse.success) {
+            if ("validationError" in registerResponse && registerResponse.validationError) {
+                Object.assign(combinedErrors, flattenValidationError(registerResponse.validationError));
+            } else if (registerResponse.error) {
+                combinedErrors.general = registerResponse.error.message;
             }
         }
 
-        setIsLoading(false)
-    }
+        // Show errors if any
+        if (Object.keys(combinedErrors).length > 0) {
+            setErrors(combinedErrors);
+            setIsLoading(false);
+            return;
+        }
+
+        // Call login
+        const loginResponse = await login(email, password);
+        if (!loginResponse.success) {
+            if ("validationError" in loginResponse && loginResponse.validationError) {
+                setErrors(flattenValidationError(loginResponse.validationError));
+            } else if (loginResponse.error) {
+                setErrors({ general: loginResponse.error.message });
+            }
+            setIsLoading(false);
+            return;
+        }
+
+        setIsLoading(false);
+        reset();
+    };
 
     const handleGoogleSignUp = async () => {
         // TODO: Implement Google OAuth
@@ -105,7 +125,7 @@ function RegisterPage() {
                             </div>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                        <form onSubmit={handleRegister} className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div className="space-y-1">
                                     <Label
@@ -119,10 +139,12 @@ function RegisterPage() {
                                         id="firstname"
                                         name="firstname"
                                         placeholder="John"
+                                        value={firstname}
+                                        onChange={(e) => setField("firstname", e.target.value)}
                                         className="bg-input border-border text-card-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                                     />
-                                    {errors.firstname && (
-                                        <p className="text-destructive text-sm mt-1 flex items-center gap-1">{errors.firstname}</p>
+                                    {errors.name && (
+                                        <p className="text-destructive text-sm mt-1 flex items-center gap-1">{errors.name}</p>
                                     )}
                                 </div>
 
@@ -138,10 +160,12 @@ function RegisterPage() {
                                         id="lastname"
                                         name="lastname"
                                         placeholder="Doe"
+                                        value={lastname}
+                                        onChange={(e) => setField("lastname", e.target.value)}
                                         className="bg-input border-border text-card-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                                     />
-                                    {errors.lastname && (
-                                        <p className="text-destructive text-sm mt-1 flex items-center gap-1">{errors.lastname}</p>
+                                    {errors.name && (
+                                        <p className="text-destructive text-sm mt-1 flex items-center gap-1">{errors.name}</p>
                                     )}
                                 </div>
                             </div>
@@ -155,6 +179,8 @@ function RegisterPage() {
                                     id="email"
                                     type="text"
                                     name="email"
+                                    value={email}
+                                    onChange={(e) => setField("email", e.target.value)}
                                     placeholder="you@example.com"
                                     className="bg-input border-border text-card-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                                 />
@@ -173,6 +199,8 @@ function RegisterPage() {
                                     id="password"
                                     type="password"
                                     name="password"
+                                    value={password}
+                                    onChange={(e) => setField("password", e.target.value)}
                                     placeholder="Create a strong password"
                                     className="bg-input border-border text-card-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                                 />

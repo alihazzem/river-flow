@@ -4,6 +4,9 @@ import { persist } from "zustand/middleware";
 import { AppwriteException, ID } from "appwrite";
 import { account } from "@/models/client/config";
 import type { IAuthStore, UserPrefs } from "@/types";
+import { registerSchema, loginSchema } from "@/lib/zod/auth";
+import { z } from "zod";
+
 
 const defaultState = {
     session: null,
@@ -37,6 +40,11 @@ export const useAuthStore = create<IAuthStore>()(
             },
 
             async login(email: string, password: string) {
+                const parsed = loginSchema.safeParse({ email, password });
+                if (!parsed.success) {
+                    const formattedError = z.treeifyError(parsed.error);
+                    return { success: false, validationError: formattedError };
+                }
                 try {
                     const session = await account.createEmailPasswordSession({
                         email,
@@ -62,6 +70,11 @@ export const useAuthStore = create<IAuthStore>()(
             },
 
             async register(email: string, password: string, name: string) {
+                const parsed = registerSchema.safeParse({ email, password, name });
+                if (!parsed.success) {
+                    const formattedError = z.treeifyError(parsed.error);
+                    return { success: false, validationError: formattedError };
+                }
                 try {
                     await account.create({
                         userId: ID.unique(),

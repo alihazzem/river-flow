@@ -24,8 +24,16 @@ export type CollectionOptions = {
     indexes: Index[];
 };
 
+export type ValidationError = {
+    errors: string[];
+    properties?: {
+        [key: string]: ValidationError;
+    };
+};
+
 export interface AuthResponse {
     success: boolean;
+    validationError?: ValidationError;
     error?: AppwriteException | null;
 }
 
@@ -41,10 +49,23 @@ export interface IAuthStore {
 
     setHydrated(): void;
     verifySession(): Promise<AuthResponse>;
-    login(email: string, password: string): Promise<{
-        success: boolean;
-        error?: AppwriteException | null;
-    }>;
+    login(email: string, password: string): Promise<AuthResponse>;
     register(email: string, password: string, name: string): Promise<AuthResponse>;
     logout(): Promise<void>;
+}
+
+export interface RegisterFormState {
+    firstname: string;
+    lastname: string;
+    email: string;
+    password: string;
+    setField: (field: keyof Omit<RegisterFormState, 'setField'>, value: string) => void;
+    reset: () => void;
+}
+
+export interface LoginFormState {
+    email: string;
+    password: string;
+    setField: (field: "email" | "password", value: string) => void;
+    reset: () => void;
 }
