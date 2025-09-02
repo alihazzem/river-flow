@@ -10,7 +10,6 @@ import { z } from "zod";
 
 const defaultState = {
     session: null,
-    jwt: null,
     user: null,
     hydrated: false,
 };
@@ -32,6 +31,7 @@ export const useAuthStore = create<IAuthStore>()(
                     set({ session });
                     return { success: true };
                 } catch (error) {
+                    set({ session: null, user: null });
                     return {
                         success: false,
                         error: error instanceof AppwriteException ? error : null
@@ -50,7 +50,7 @@ export const useAuthStore = create<IAuthStore>()(
                         email,
                         password
                     });
-                    const [user, { jwt }] = await Promise.all([
+                    const [user] = await Promise.all([
                         account.get<UserPrefs>(),
                         account.createJWT()
                     ]);
@@ -59,7 +59,7 @@ export const useAuthStore = create<IAuthStore>()(
                             prefs: { reputation: 0 }
                         })
                     }
-                    set({ session, jwt, user });
+                    set({ session, user });
                     return { success: true };
                 } catch (error) {
                     return {
@@ -102,6 +102,14 @@ export const useAuthStore = create<IAuthStore>()(
         })),
         {
             name: "auth",
+            partialize: (state) => ({
+                session: state.session,
+                user: {
+                    name: state.user?.name,
+                    email: state.user?.email,
+                    reputation: state.user?.prefs?.reputation
+                }
+            }),
             onRehydrateStorage() {
                 return (state, error) => {
                     if (!error) state?.setHydrated();

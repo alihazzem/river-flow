@@ -6,6 +6,7 @@ const client = new Client();
 client
     .setEndpoint(env.appwrite.endpoint)
     .setProject(env.appwrite.projectId);
+;
 
 const databases = new Databases(client);
 const avatars = new Avatars(client);
