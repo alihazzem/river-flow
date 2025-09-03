@@ -36,7 +36,7 @@ const LabelInputContainer = ({
     );
 };
 
-const QuestionForm = ({ question }: { question?: QuestionForm }) => {
+const QuestionFormm = ({ question }: { question?: QuestionForm }) => {
     const { user } = useAuthStore();
     const [tag, setTag] = React.useState("");
     const router = useRouter();
@@ -310,4 +310,4 @@ const QuestionForm = ({ question }: { question?: QuestionForm }) => {
     );
 };
 
-export default QuestionForm;
+export default QuestionFormm;
