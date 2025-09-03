@@ -104,11 +104,14 @@ export const useAuthStore = create<IAuthStore>()(
             name: "auth",
             partialize: (state) => ({
                 session: state.session,
-                user: {
-                    name: state.user?.name,
-                    email: state.user?.email,
-                    reputation: state.user?.prefs?.reputation
-                }
+                user: state.user
+                    ? {
+                        name: state.user.name,
+                        email: state.user.email,
+                        reputation: state.user.prefs.reputation
+                    }
+                    : null,
+                hydrated: state.hydrated,
             }),
             onRehydrateStorage() {
                 return (state, error) => {

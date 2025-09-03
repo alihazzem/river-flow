@@ -43,7 +43,7 @@ export interface UserPrefs extends Models.DefaultPreferences {
 
 export interface IAuthStore {
     session: Models.Session | null;
-    user: Models.User<UserPrefs> | null;
+    user: safeUser | null;
     hydrated: boolean;
 
     setHydrated(): void;
@@ -67,4 +67,51 @@ export interface LoginFormState {
     password: string;
     setField: (field: "email" | "password", value: string) => void;
     reset: () => void;
+}
+
+export interface QuestionForm extends Models.Document {
+    title: string;
+    content: string;
+    tags: string[];
+    attachmentId: string;
+    authorId: string;
+}
+
+export interface QuestionCard extends Models.Document {
+    title: string;
+    content: string;
+    totalVotes: number;
+    totalAnswers: number;
+    tags: string[];
+    author: {
+        $id: string;
+        name: string;
+        reputation: number;
+    };
+}
+
+export interface CommentDoc extends Models.Document {
+    content: string;
+    authorId: string;
+    author: { name: string };
+}
+
+export interface AnswerDoc extends Models.Document {
+    content: string;
+    authorId: string;
+    author: {
+        $id: string;
+        name: string;
+        reputation: number;
+    };
+    upvotesDocuments: Models.DocumentList<VoteDoc>;
+    downvotesDocuments: Models.DocumentList<VoteDoc>;
+    comments: Models.DocumentList<CommentDoc>;
+}
+
+export interface VoteDoc extends Models.Document {
+    votedById: string; // user id who voted
+    type: "question" | "answer"; // what was voted on
+    typeId: string; // id of the question or answer
+    voteStatus: "upvoted" | "downvoted"; // vote direction
 }
